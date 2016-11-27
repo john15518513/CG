@@ -107,26 +107,33 @@ class SimpleDrawCanvas extends Canvas implements ActionListener, MouseListener {
 
     Color currentColor;  // Color that is currently being used for drawing new lines.
     java.util.List<Point> pointSet = new ArrayList<Point>();
+    Point mousePoint;
     Point top, bottomleft, bottomright;
+    boolean selfClose;
+    boolean mouseClick;
     SimpleDrawCanvas() {
         // Construct the canvas, and set it to listen for mouse events.
         setBackground(Color.white);
         currentColor = Color.black;
-	addMouseListener(this);
+    	addMouseListener(this);
+        selfClose = false;
+        mouseClick = false;
+        // doClear();
     }
 
     int orientation(Point p, Point q, Point r) {
-	int val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-	return (val > 0)? 1: 2;
+    	int val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+    	return (val > 0)? 1: 2;
     }
 
     boolean inside(Point r) {
-	if (orientation(top, bottomleft, r) > 0 &&
-	    orientation(bottomleft, bottomright, r) > 0 &&
-	    orientation(bottomright, top, r) > 0) 
-	    return true;
-	
-	return false;		
+        // return true;
+    	if (orientation(top, bottomleft, r) == 1 &&
+    	    orientation(bottomleft, bottomright, r) == 1 &&
+    	    orientation(bottomright, top, r) == 1) 
+    	    return true;
+    	
+    	return false;		
     }
 
     boolean intersect(Point p1, Point q1, Point p2, Point q2) {
@@ -141,21 +148,21 @@ class SimpleDrawCanvas extends Canvas implements ActionListener, MouseListener {
     	if (o1 != o2 && o3 != o4)
             return true;
 	
-	return false;	
+    	return false;	
     }
 
     boolean selfcross(Point r) {
-	int size = pointSet.size();
-	int i = 0;
-	// click 'close'
-	if (r.x == pointSet.get(0).x && r.y == pointSet.get(0).y) { 
-	    i = 1;
-	}
-	for (; i<size-2; i++ ) {
-	    //return true if added point r incur intersection
-	    if (intersect(pointSet.get(i), pointSet.get(i+1), pointSet.get(size-1), r))
-		return true;
-	}
+    	int size = pointSet.size();
+    	int i = 0;
+    	// click 'close'
+    	if (r.x == pointSet.get(0).x && r.y == pointSet.get(0).y) { 
+    	    i = 1;
+    	}
+    	for (; i<size-2; i++ ) {
+    	    //return true if added point r incur intersection
+    	    if (intersect(pointSet.get(i), pointSet.get(i+1), pointSet.get(size-1), r))
+    		return true;
+    	}
     	return false;
     }
 
@@ -167,32 +174,14 @@ class SimpleDrawCanvas extends Canvas implements ActionListener, MouseListener {
     void doClear() {
         // Clear all the lines from the picture.
         pointSet.clear();
+        mouseClick = false;
         repaint();
-	Graphics g = getGraphics();
-        top = new Point((50 + 100)/2, 50);
-        bottomleft = new Point( 50, 100-50);
-        bottomright = new Point( 100-50, 100-50);
-        g.setColor(currentColor);
-        // Point boundry
-        g.fillOval(top.x-3, top.y-3, 6, 6); 
-        g.fillOval(bottomleft.x-3, bottomleft.y-3, 6, 6); 
-        g.fillOval(bottomright.x-3, bottomright.y-3, 6, 6); 
-        // Line boundry
-        g.drawLine(top.x, top.y, bottomleft.x, bottomleft.y);
-        g.drawLine(bottomleft.x, bottomleft.y, bottomright.x, bottomright.y);
-        g.drawLine(bottomright.x, bottomright.y, top.x, top.y); 
-	g.dispose();
     }
 
     void doClose() { 
         // Remove most recently added line from the picture.
-        int size = pointSet.size();
-        if (size >= 3 && !selfcross(pointSet.get(0))) {
-            Graphics g = getGraphics();
-            g.setColor(currentColor);
-            g.drawLine(pointSet.get(size-1).x, pointSet.get(size-1).y, pointSet.get(0).x, pointSet.get(0).y);
-            g.dispose();
-        }
+        selfClose = true;
+        repaint();
     }
 
     public void actionPerformed(ActionEvent evt) {
@@ -204,65 +193,63 @@ class SimpleDrawCanvas extends Canvas implements ActionListener, MouseListener {
         doClose();
     }
 
-    // int startX, startY;  // When the user presses the mouse button, the
-                        // location of the mouse is stored in these variables.
-                        // This information is needed when the mouse button
-                        // is released.
     public void mousePressed(MouseEvent evt) {
-         // This is called by the system when the user presses the mouse button.
-         // Record the location at which the mouse was pressed.  This location
-         // is one endpoint of the line that will be drawn when the mouse is
-         // released.  This method is part of the MouseLister interface.
-      // startX = evt.getX();
-      // startY = evt.getY();
     }
 
     public void mouseReleased(MouseEvent evt) {
-         // This is called by the system when the user releases the mouse button.
-         // Draw a line in the current color.  The line starts at the point
-         // (start, startY), which is where the mouse button was pressed, and
-         // it ends at the point where the mouse release occurs.  This method
-         // is part of the MouseListener interface.
-
-      // int endX = evt.getX();  // Where the mouse was released.
-      // int endY = evt.getY();
-
-      // Graphics g = getGraphics();  // Get a graphics context for drawing on the canvas.
-
-      // g.setColor(currentColor);  // Draw the line in the current drawing color.
-      // g.drawLine(startX, startY, endX, endY);
-
-      // g.dispose();  // To be nice to the operating system, free the graphics context.
-
     } // end mouseReleased
-
     public void mouseClicked(MouseEvent evt) { 
-        Point p = new Point(evt.getX(), evt.getY());
-        Graphics g = getGraphics();
-        
-	int size = pointSet.size();
-	// first point addedd
-        if (size == 0 && inside(p)) {
-	    g.setColor(currentColor);
-            g.fillOval(p.x-3, p.y-3, 6, 6);
-	    pointSet.add(p);   
-	}
-	// size + point p < 4 so no need to check selfcross
-	else if (size < 3 && inside(p)) {
-	    g.setColor(currentColor);
-            g.fillOval(p.x-3, p.y-3, 6, 6);
-            g.drawLine(pointSet.get(size-1).x, pointSet.get(size-1).y, p.x, p.y);
-            pointSet.add(p);
-	}
-	else if (!selfcross(p) && inside(p)) {
-	    g.setColor(currentColor);
-            g.fillOval(p.x-3, p.y-3, 6, 6); 
-            g.drawLine(pointSet.get(size-1).x, pointSet.get(size-1).y, p.x, p.y);
-            pointSet.add(p);
-	}
-        g.dispose();
+        mousePoint = new Point(evt.getX(), evt.getY());
+        mouseClick = true;
+        repaint();
     }  // Other methods in the MouseListener interface
-   public void mouseEntered(MouseEvent evt) { }
-   public void mouseExited(MouseEvent evt) { }
+    public void mouseEntered(MouseEvent evt) {}
+    public void mouseExited(MouseEvent evt) {}
+
+    public void paint(Graphics g) {
+        // Drw triangulation
+        top = new Point(400, 50);
+        bottomleft = new Point(200, 350);
+        bottomright = new Point(600, 350);
+        g.setColor(currentColor);
+        // Point boundry
+        g.fillOval(top.x-3, top.y-3, 6, 6); 
+        g.fillOval(bottomleft.x-3, bottomleft.y-3, 6, 6); 
+        g.fillOval(bottomright.x-3, bottomright.y-3, 6, 6); 
+        // Line boundry
+        g.drawLine(top.x, top.y, bottomleft.x, bottomleft.y);
+        g.drawLine(bottomleft.x, bottomleft.y, bottomright.x, bottomright.y);
+        g.drawLine(bottomright.x, bottomright.y, top.x, top.y); 
+
+
+        Point p = mousePoint;
+        int size = pointSet.size();
+        if (size < 3 && inside(p) && mouseClick) {
+            pointSet.add(p);
+        } else if (!selfcross(p) && inside(p) && mouseClick) {
+            pointSet.add(p);
+        }
+        mouseClick = false;
+        size = pointSet.size();
+        for (int i=0; i < size; i++) {
+            Point dp = pointSet.get(i);
+            g.fillOval(dp.x-3, dp.y-3, 6, 6);
+            System.out.print("draw");
+        }
+        for (int i=1; i < size; i++) {
+            Point dp = pointSet.get(i);
+            Point pdp = pointSet.get(i-1);
+            g.drawLine(dp.x, dp.y, pdp.x, pdp.y);
+        }
+        if (selfClose && size > 2 ) {
+            Point sp = pointSet.get(0);
+            Point ep = pointSet.get(size-1);
+            if (!selfcross(sp)) {
+                g.drawLine(sp.x, sp.y, ep.x, ep.y);
+                selfClose = false;
+            }
+        }
+        g.dispose();
+    }
 
 } // end class SimpleDrawCanvas
