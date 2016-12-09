@@ -28,6 +28,7 @@ Unarchive the project file, click the index.html in the “test” folder. And f
 
 ## Implementation 
 In our project, we implement the Kirkpatrick’s point location algorithm. There are 2 main problems needs to be solved:
+
 **1. Polygon Triangulation**
 The triangulation algorithm is based on the earcut method. We use a java library to do this job. You can find it in [earcut4j](https://github.com/earcut4j/earcut4j)
 
